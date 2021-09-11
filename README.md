@@ -34,5 +34,4 @@ Use `Uppercase` for class names.
 Note: Use underscores if the name may become unclear. For example: use `sb3_unpack` instead of `sb3Unpack`
 ## How to use 
 Assuming that you installed all necessary requirements, place your sb3 files in the scratch2python folder where main.py is located.
-Then, change the projectToLoad variable to your project file.
-Now, just run `python3 main.py` and the project will start!
+the script will ask you which project to load give the name and the .sb3 extension
