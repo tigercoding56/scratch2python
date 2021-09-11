@@ -29,7 +29,11 @@ def loadSvg(svg_bytes):
 
 
 # Render a sprite at its coordinates
-def render(sprite, x, y):
+def render(sprite, x, y, direction):
+    # upscale sprite
+    sprite = pygame.transform.scale(sprite, (sprite.get_width() * 2, sprite.get_height() * 2))
+    # set direction
+    sprite = pygame.transform.rotate(sprite, 90 - direction)
     # convert Scratch coordinates into Pygame coordinates
     finalX = x + WIDTH // 2 - sprite.get_width() // 2
     finalY = HEIGHT // 2 - y - sprite.get_height() // 2
@@ -38,21 +42,22 @@ def render(sprite, x, y):
 
 # Set the stage background
 def setBackground(bg):
-    render(bg, 0, 0)
+    render(bg, 0, 0, 90)
 
 
 # Prepare project file
-projectToLoad = "ifonedgebounce.sb3"  # change this to load a different project
+projectToLoad = "gotoxy2.sb3"  # change this to load a different project
 targets, currentBgFile, project = s2p_unpacker.sb3_unpack(projectToLoad)
 wn = tk.Tk()  # Start tkinter for popups
 wn.withdraw()  # Hide main tkinter window
+allSprites = pygame.sprite.Group()
 # when needed
 # wn.deiconify()
 pygame.init()  # Start pygame
 scratch.startProject()
 # Set player size
-HEIGHT = 360
-WIDTH = 480
+HEIGHT = 720
+WIDTH = 960
 projectName = projectToLoad[:-4] # Set the project name
 icon = pygame.image.load("icon.png")
 display = pygame.display.set_mode([WIDTH, HEIGHT])
@@ -62,7 +67,8 @@ currentBg = loadSvg(currentBgFile)
 # currentBgFile = project.read(target["costumes"][target["currentCostume"]]["md5ext"])
 projectRunning = True
 
-
+display.fill((255, 255, 255))
+setBackground(currentBg)
 while projectRunning:
     for event in pygame.event.get():
         # Window quit (ALT-F4 / X button)
@@ -87,18 +93,24 @@ while projectRunning:
                 os.mkdir("assets")
                 project.extractall("assets")
     display.fill((255, 255, 255))
-    # Move all sprites to current position and direction
     setBackground(currentBg)
+    # Move all sprites to current position and direction, run blocks
     for target in targets:
-        render(loadSvg(target.costumes[target.currentCostume].file), target.x, target.y)
+        render(loadSvg(target.costumes[target.currentCostume].file), target.x * 2, target.y * 2, target.direction)
         for _, block in target.blocks.items():
-            if not block.blockRan and block.opcode == "event_whenflagclicked":
+            if not block.blockRan:
                 print("DEBUG: Running opcode", block.opcode)
                 print("DEBUG: Running ID", block.blockID)
-                print("DEBUG: Next ID", block.next)
-                nextBlock = target.blocks[block.next]
-                print("DEBUG: Next opcode", nextBlock.opcode)
+                if block.next:
+                    print("DEBUG: Next ID", block.next)
+                    nextBlock = target.blocks[block.next]
+                    print("DEBUG: Next opcode", nextBlock.opcode)
+                else:
+                    print("DEBUG: Last block")
+                scratch.execute(block, target)
                 block.blockRan = True
+    allSprites.draw(display)
+    allSprites.update()
     pygame.display.flip()
     wn.update()
 pygame.quit()
